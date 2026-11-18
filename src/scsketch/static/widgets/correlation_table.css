@@ -77,3 +77,8 @@
 .correlation-table tr:hover {
   background-color: #eee;
 }
+.correlation-table tr.ct-row-selected td,
+.correlation-table tr.ct-row-selected:hover td {
+  background-color: #cecece;
+  font-weight: 500;
+}

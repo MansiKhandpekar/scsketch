@@ -22,6 +22,13 @@ function render({ model, el }) {
 
   let rowsCache = [];
 
+  // Highlight the row of the currently selected gene.
+  const markSelected = (geneId) => {
+    rowsCache.forEach(row => {
+      row.classList.toggle("ct-row-selected", !!geneId && row.dataset.geneId === geneId);
+    });
+  };
+
   const columnClass = (col) => {
     if (col === "Gene") {
       return "ct-col-gene";
@@ -62,11 +69,13 @@ function render({ model, el }) {
       const geneId = (row["_gene_id"] ?? row["Gene"] ?? "").toString();
       const geneVal = (row["Gene"] ?? geneId).toString();
       tr.dataset.gene = `${geneVal} ${geneId}`.toLowerCase();
+      tr.dataset.geneId = geneId;
       tr.style.cursor = "pointer";
       tr.onclick = () => {
         if (geneId) {
           model.set("selected_gene", geneId);
           model.save_changes();
+          markSelected(geneId);
         }
       };
 
@@ -104,6 +113,11 @@ function render({ model, el }) {
   };
 
   initializeTable();
+  markSelected((model.get("selected_gene") || "").toString());
+  // Also follow programmatic changes (e.g. restoring a saved session).
+  model.on("change:selected_gene", () => {
+    markSelected((model.get("selected_gene") || "").toString());
+  });
 
   let previousLength = 0;
 

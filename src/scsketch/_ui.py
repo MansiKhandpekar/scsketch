@@ -10,6 +10,7 @@ No business logic lives here — only widget instantiation and layout wiring.
 
 from __future__ import annotations
 
+import html
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -57,6 +58,38 @@ _LOGO_HTML = (
     'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'
     "</svg><span>scSketch</span></div>"
 )
+
+
+# ── Empty states ────────────────────────────────────────────────────────────
+# Dashed-circle icon + title + hint, per the Figma "Empty ... state" frames.
+_EMPTY_ICON = (
+    '<svg class="sc-empty-icon" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" '
+    'aria-hidden="true"><circle cx="14" cy="14" r="12.5" fill="none" stroke="#606269" '
+    'stroke-width="1.4" stroke-dasharray="2.6 2.6"/></svg>'
+)
+
+
+def _empty_state(title: str, text: str) -> ipyw.HTML:
+    widget = ipyw.HTML(
+        f'<div class="sc-empty">{_EMPTY_ICON}'
+        f'<div class="sc-empty-title">{title}</div>'
+        f'<div class="sc-empty-text">{text}</div></div>'
+    )
+    widget.add_class("sc-empty-wrap")
+    return widget
+
+
+def _wire_empty_states(selections_predicates: VBox, empty_genes: ipyw.HTML) -> None:
+    """Show the gene empty state only while the gene table area is empty.
+
+    The existing handlers already fill/clear ``children``; this just listens.
+    """
+
+    def sync(*_args) -> None:
+        empty_genes.layout.display = None if not selections_predicates.children else "none"
+
+    selections_predicates.observe(sync, names=["children"])
+    sync()
 
 
 def _theme_css() -> str:
@@ -115,10 +148,13 @@ class UIControls:
     session_status: ipyw.HTML
 
     # ── Result display containers ────────────────────────────────────────────
-    multi_view_toggle: ipyw.ToggleButtons
+    multi_view_toggle: ipyw.ToggleButton
     multi_view_container: VBox
     pathway_table_container: VBox
     reactome_diagram_container: VBox
+
+    # ── Empty states ─────────────────────────────────────────────────────────
+    empty_genes: ipyw.HTML
 
     # ── Top-level layout widget ───────────────────────────────────────────────
     plot_wrapper: VBox
@@ -331,22 +367,24 @@ def build_controls(
     # ── Result display containers ────────────────────────────────────────────
     extra_views = extra_views or {}
     has_extra_views = len(extra_views) > 0
-    multi_view_toggle = ipyw.ToggleButtons(
-        options=[("OFF", False), ("ON", True)],
+    # A single boolean toggle, drawn as a switch by CSS (see .sc-multiview).
+    multi_view_toggle = ipyw.ToggleButton(
         value=has_extra_views,
-        description="Multi-view",
+        description="Multiview",
+        tooltip="Show or hide the extra views",
+        icon="",
         disabled=not has_extra_views,
         layout=Layout(width="auto", display="flex" if has_extra_views else "none"),
-        style={"description_width": "80px"},
     )
+    multi_view_toggle.add_class("sc-multiview")
     extra_view_children: list[ipyw.Widget] = []
     for label, view in extra_views.items():
-        extra_view_children.extend(
-            [
-                ipyw.HTML(f"<b>{label}</b>"),
-                view.show(),
-            ]
-        )
+        chip_text = str(label)
+        if not chip_text.lower().endswith("plot"):
+            chip_text += " plot"
+        view_chip = ipyw.HTML(f'<span class="sc-chip">{html.escape(chip_text)}</span>')
+        view_chip.add_class("sc-view-chip")
+        extra_view_children.extend([view_chip, view.show()])
     multi_view_container = VBox(
         extra_view_children,
         layout=Layout(
@@ -412,12 +450,17 @@ def build_controls(
 
     # ── Plot (dark) ──────────────────────────────────────────────────────────
     plot_wrapper = VBox(
-        [color_by, scatter.show(), gene_expression_caption, session_status],
+        [color_by, multi_view_toggle, scatter.show(), gene_expression_caption, session_status],
         layout=Layout(width="100%", min_width="0px", overflow="hidden"),
     )
     plot_wrapper.add_class("sc-plot")
 
     # ── Sidebar: SELECTIONS | GENE | compute ─────────────────────────────────
+    empty_genes = _empty_state(
+        "No selection yet", "Make a selection and compute to see the genes"
+    )
+    _wire_empty_states(selections_predicates, empty_genes)
+
     selections_section = VBox(
         [_section_title("Selections"), complete_add, selections_elements],
         layout=Layout(flex="0 0 auto"),
@@ -425,7 +468,7 @@ def build_controls(
     divider = VBox([], layout=Layout(width="100%"))
     divider.add_class("sc-divider")
     genes_section = VBox(
-        [_section_title("Gene"), selections_predicates_wrapper],
+        [_section_title("Gene"), empty_genes, selections_predicates_wrapper],
         layout=Layout(flex="1 1 0px", min_height="0px", overflow="auto"),
     )
     genes_section.add_class("sc-sidebar-genes")
@@ -438,7 +481,7 @@ def build_controls(
     # Keep the existing gene-detail widgets together in the upper-right panel.
     # Result renderers and multi-view handlers retain the same widget references.
     details = VBox(
-        [multi_view_toggle, multi_view_container, pathway_table_container],
+        [multi_view_container, pathway_table_container],
         layout=Layout(height="100%", min_height="0px", min_width="0px", overflow="hidden"),
     )
     details.add_class("sc-details")
@@ -501,6 +544,7 @@ def build_controls(
         multi_view_container=multi_view_container,
         pathway_table_container=pathway_table_container,
         reactome_diagram_container=reactome_diagram_container,
+        empty_genes=empty_genes,
         plot_wrapper=plot_wrapper,
         sidebar=sidebar,
         ui=ui,

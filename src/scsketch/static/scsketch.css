@@ -201,8 +201,15 @@
 .sc-root .sc-colorby select {
   height: 36px;
   min-width: 140px;
-  padding: 0 12px;
+  padding: 0 32px 0 12px;
   background-color: var(--sc-dark-control);
+  /* White drop-down chevron (replaces the theme's dark arrow). */
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px 16px;
   border: 1px solid var(--sc-dark-border);
   border-radius: var(--sc-radius);
   color: var(--sc-dark-text);
@@ -210,6 +217,70 @@
   box-shadow: none;
 }
 .sc-plot .sc-caption { color: var(--sc-dark-text); }
+
+/* Multiview toggle lives in the plot panel, under "Color by".
+   A single ToggleButton drawn as a switch: the whole control is one click
+   target, with the label on the left and the track + knob on the right. */
+.sc-multiview { align-self: flex-start; }
+.sc-root .sc-multiview.widget-toggle-button,
+.sc-root button.sc-multiview {
+  display: inline-flex;
+  align-items: center;
+  gap: 20px;
+  height: 22px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--sc-dark-text-muted);
+  font-size: 13px;
+  line-height: 22px;
+  cursor: pointer;
+}
+.sc-root button.sc-multiview i.fa { display: none; }
+.sc-root button.sc-multiview::after {
+  content: "";
+  flex: none;
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  background-color: var(--sc-dark-border);
+  background-image: radial-gradient(circle at center, #ffffff 0 8px, transparent 8.5px);
+  background-size: 22px 22px;
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  transition: background-color 0.15s ease, background-position 0.15s ease;
+}
+.sc-root button.sc-multiview.mod-active::after {
+  background-color: var(--sc-accent);
+  background-position: 18px 0;
+}
+/* No ring after a mouse click (also overrides JupyterLab's button focus
+   outline); keep a ring on the switch itself for keyboard users. */
+.sc-root button.sc-multiview:focus { outline: none; box-shadow: none; }
+.sc-root button.sc-multiview:focus-visible::after {
+  outline: 2px solid var(--sc-accent);
+  outline-offset: 2px;
+}
+.sc-root button.sc-multiview:disabled { opacity: 0.5; cursor: default; }
+
+/* Title chip above each extra view (e.g. "PCA"), per the Figma "PCA chip". */
+.sc-root .sc-view-chip { align-self: flex-start; width: auto; margin: 0; }
+.sc-root .sc-chip {
+  display: inline-block;
+  padding: 4px 10px;
+  background: var(--sc-surface-muted);
+  border: 1px solid var(--sc-border-control);
+  border-radius: 6px;
+  color: var(--sc-text);
+  font-family: var(--sc-font);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+  white-space: nowrap;
+}
 
 /* Lasso toolbar: jupyter-scatter's vertical button column, re-laid out as a
    floating dark pill at the bottom-center of the plot (as in the design).
@@ -284,6 +355,99 @@
   border: 0 !important;
 }
 
+/* Extra-view (e.g. PCA) toolbar: same floating pill as the main plot's,
+   in light colours to suit the white details column. Buttons are a little
+   smaller and the pill wraps so it fits the narrower column. */
+.sc-details .widget-hbox:has(> .widget-vbox > div > .jupyter-scatter-button) {
+  position: relative;
+}
+.sc-details .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) {
+  position: absolute;
+  left: 50%;
+  /* Sit above the x-axis (about 40px of ticks and labels) instead of over it. */
+  bottom: 52px;
+  transform: translateX(-50%);
+  z-index: 5;
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  width: auto !important;
+  max-width: calc(100% - 16px);
+  height: auto !important;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--sc-border-control);
+  border-radius: var(--sc-radius-lg);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+.sc-details .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) > div {
+  width: auto !important;
+  height: auto !important;
+  margin: 0;
+}
+.sc-details .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) .jupyter-scatter-button,
+.sc-details .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) .jupyter-scatter-choice-toggler,
+.sc-details .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) .jupyter-scatter-slider-toggler {
+  width: 28px !important;
+  height: 28px !important;
+  margin: 0 !important;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sc-text);
+  box-shadow: none;
+}
+.sc-details .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) .jupyter-scatter-button:hover,
+.sc-details .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) .jupyter-scatter-choice-toggler:hover,
+.sc-details .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) .jupyter-scatter-slider-toggler:hover {
+  background: rgba(38, 40, 44, 0.06);
+}
+.sc-details .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) .jupyter-scatter-button.mod-primary {
+  background: rgba(38, 40, 44, 0.12);
+  color: var(--sc-text);
+}
+/* Centre every icon (SVG or font glyph) in its button: flex-centre the
+   button and strip the margins/padding that ipywidgets adds next to icons. */
+.sc-details .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) button {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1;
+}
+.sc-details .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) button svg,
+.sc-details .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) button i {
+  display: block;
+  flex: none;
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 15px;
+  line-height: 18px;
+  text-align: center;
+}
+/* jupyter-scatter opens these pop-ups to the RIGHT of the button (its inline
+   `left` is button-left + 36px, the width it assumes for a toolbar button),
+   which runs off the page in the narrow right column. Open them above the
+   toolbar and centred on the button instead. Our buttons are 28px wide, so
+   the button's centre is 14px from its left edge: shift by -50% of the
+   pop-up plus (14 - 36) = -22px. */
+.sc-details dialog.jupyter-scatter-choice-dialog,
+.sc-details dialog.jupyter-scatter-slider-dialog {
+  transform: translate(calc(-50% - 22px), calc(-100% - 10px));
+}
+.sc-details .jupyter-scatter-divider {
+  width: 1px !important;
+  height: 24px !important;
+  margin: 0 3px !important;
+  background: var(--sc-border-control) !important;
+  border: 0 !important;
+}
+
 /* ── Sidebar ─────────────────────────────────────────────────────────── */
 .sc-sidebar {
   background: var(--sc-surface);
@@ -298,8 +462,22 @@
   letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--sc-text-muted);
-  margin: 0 0 6px;
+  margin: 0 0 2px;
+  line-height: 14px;
 }
+/* ipywidgets gives HTML widgets a ~28px line box and 2px margins, which left a
+   big gap under the section titles. Shrink the wrapper to the text. */
+.sc-root .widget-html:has(> .widget-html-content > .sc-section-title),
+.sc-root .widget-html-content:has(> .sc-section-title) {
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  line-height: 14px;
+}
+/* Tighter gap between the "Gene" title, the search box and the table. */
+.sc-sidebar .ct-search-input { margin-bottom: 4px; }
+.sc-sidebar .correlation-table { margin-top: 4px; }
 .sc-divider { height: 1px; background: var(--sc-border); flex: none; }
 .sc-sidebar-genes { flex: 1 1 0; min-height: 0; overflow-y: auto; }
 .sc-root .sc-compute .widget-inline-hbox,
@@ -363,6 +541,34 @@
   max-height: none !important;
 }
 
+/* ── Empty states (Figma "Empty selections / results state") ──────────── */
+.sc-root .sc-empty-wrap { width: 100%; margin: 0; }
+.sc-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 20px 8px 8px;
+  text-align: center;
+  font-family: var(--sc-font);
+}
+.sc-empty-icon { width: 28px; height: 28px; flex: none; }
+.sc-empty-title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: normal;
+  color: var(--sc-text);
+  white-space: nowrap;
+}
+.sc-empty-text {
+  max-width: 300px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: normal;
+  color: var(--sc-text-muted);
+}
 /* ── Full-width Reactome diagram ─────────────────────────────────────── */
 .sc-dock {
   background: var(--sc-surface);
