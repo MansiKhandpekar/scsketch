@@ -59,6 +59,48 @@ _LOGO_HTML = (
 )
 
 
+# ── Workspace columns ───────────────────────────────────────────────────────
+# Two columns (plot | sidebar) by default; the details column (extra views,
+# gene description, pathway table) is added only while it has something to show.
+_COLUMNS_TWO = "minmax(0, 2fr) minmax(280px, 1fr)"
+_COLUMNS_THREE = "minmax(0, 1.6fr) minmax(260px, 1fr) minmax(280px, 1fr)"
+
+
+def _wire_details_visibility(
+    workspace: GridBox, details: VBox, watched: List[ipyw.Widget]
+) -> None:
+    """Show the details column only while one of ``watched`` is visible.
+
+    The result and multi-view handlers already toggle ``layout.display`` on
+    these containers (and ``_results`` sometimes replaces their ``Layout``
+    object), so this listens for those changes instead of touching every
+    handler.
+    """
+
+    def sync(*_args) -> None:
+        has_content = any(w.layout.display != "none" for w in watched)
+        details.layout.display = "flex" if has_content else "none"
+        workspace.layout.grid_template_columns = (
+            _COLUMNS_THREE if has_content else _COLUMNS_TWO
+        )
+
+    def rebind(change) -> None:
+        old, new = change["old"], change["new"]
+        if old is not None:
+            try:
+                old.unobserve(sync, names=["display"])
+            except ValueError:
+                pass
+        if new is not None:
+            new.observe(sync, names=["display"])
+        sync()
+
+    for w in watched:
+        w.layout.observe(sync, names=["display"])
+        w.observe(rebind, names=["layout"])
+    sync()
+
+
 def _theme_css() -> str:
     """Return the scSketch theme stylesheet ('' if the file is missing)."""
     try:
@@ -115,7 +157,7 @@ class UIControls:
     session_status: ipyw.HTML
 
     # ── Result display containers ────────────────────────────────────────────
-    multi_view_toggle: ipyw.ToggleButtons
+    multi_view_toggle: ipyw.ToggleButton
     multi_view_container: VBox
     pathway_table_container: VBox
     reactome_diagram_container: VBox
@@ -331,14 +373,16 @@ def build_controls(
     # ── Result display containers ────────────────────────────────────────────
     extra_views = extra_views or {}
     has_extra_views = len(extra_views) > 0
-    multi_view_toggle = ipyw.ToggleButtons(
-        options=[("OFF", False), ("ON", True)],
+    # A single boolean toggle, drawn as a switch by CSS (see .sc-multiview).
+    multi_view_toggle = ipyw.ToggleButton(
         value=has_extra_views,
-        description="Multi-view",
+        description="Multiview",
+        tooltip="Show or hide the extra views",
+        icon="",
         disabled=not has_extra_views,
         layout=Layout(width="auto", display="flex" if has_extra_views else "none"),
-        style={"description_width": "80px"},
     )
+    multi_view_toggle.add_class("sc-multiview")
     extra_view_children: list[ipyw.Widget] = []
     for label, view in extra_views.items():
         extra_view_children.extend(
@@ -412,7 +456,7 @@ def build_controls(
 
     # ── Plot (dark) ──────────────────────────────────────────────────────────
     plot_wrapper = VBox(
-        [color_by, scatter.show(), gene_expression_caption, session_status],
+        [color_by, multi_view_toggle, scatter.show(), gene_expression_caption, session_status],
         layout=Layout(width="100%", min_width="0px", overflow="hidden"),
     )
     plot_wrapper.add_class("sc-plot")
@@ -438,7 +482,7 @@ def build_controls(
     # Keep the existing gene-detail widgets together in the upper-right panel.
     # Result renderers and multi-view handlers retain the same widget references.
     details = VBox(
-        [multi_view_toggle, multi_view_container, pathway_table_container],
+        [multi_view_container, pathway_table_container],
         layout=Layout(height="100%", min_height="0px", min_width="0px", overflow="hidden"),
     )
     details.add_class("sc-details")
@@ -447,13 +491,16 @@ def build_controls(
     workspace = GridBox(
         [plot_wrapper, sidebar, details],
         layout=Layout(
-            grid_template_columns="minmax(0, 1.6fr) minmax(260px, 1fr) minmax(280px, 1fr)",
+            grid_template_columns=_COLUMNS_THREE,
             width="100%",
             min_width="0px",
             align_items="stretch",
         ),
     )
     workspace.add_class("sc-workspace")
+    _wire_details_visibility(
+        workspace, details, [multi_view_container, pathway_table_container]
+    )
 
     # The full pathway diagram keeps the width available below the workspace.
     reactome_diagram_container.add_class("sc-dock")
