@@ -51,6 +51,16 @@ PROGRESS_SPINNER_HTML = (
 
 _THEME_CSS_PATH = Path(__file__).parent / "static" / "scsketch.css"
 
+# Lets the notebook's output area grow and scroll instead of clipping the app.
+# Unlike the theme file, this rule is NOT limited to ``.sc-root``: it applies to
+# the whole notebook page.
+_NOTEBOOK_OVERFLOW_CSS = (
+    ".jp-OutputArea-output, .jp-Cell-outputArea, .jp-Notebook {\n"
+    "    overflow: auto !important;\n"
+    "    max-height: none !important;\n"
+    "}\n"
+)
+
 # Simple placeholder mark; swap for the final logo asset when available.
 _LOGO_HTML = (
     '<div class="sc-logo">'
@@ -470,11 +480,7 @@ def build_controls(
     # Injected once per build; scoped to ``.sc-root`` so nothing leaks out.
     display(
         HTML(
-            "<style>\n"
-            + _theme_css()
-            + "\n.jp-OutputArea-output, .jp-Cell-outputArea, .jp-Notebook {\n"
-            "    overflow: auto !important;\n    max-height: none !important;\n}\n"
-            "</style>"
+            "<style>\n" + _theme_css() + "\n" + _NOTEBOOK_OVERFLOW_CSS + "</style>"
         )
     )
 
