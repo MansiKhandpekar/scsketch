@@ -334,7 +334,8 @@
 }
 /* Centre every icon (SVG or font glyph) in its button: flex-centre the
    button and strip the margins/padding that ipywidgets adds next to icons. */
-.sc-plot .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) button {
+.sc-plot .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) button,
+.sc-details .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) button {
   display: flex !important;
   align-items: center;
   justify-content: center;
@@ -429,15 +430,6 @@
 .sc-details .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) .jupyter-scatter-button.mod-primary {
   background: rgba(38, 40, 44, 0.12);
   color: var(--sc-text);
-}
-/* Centre every icon (SVG or font glyph) in its button: flex-centre the
-   button and strip the margins/padding that ipywidgets adds next to icons. */
-.sc-details .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) button {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  line-height: 1;
 }
 .sc-details .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) button svg,
 .sc-details .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) button i {
