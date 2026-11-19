@@ -29,6 +29,11 @@ function render({ model, el }) {
     });
   };
 
+  // Highlight whichever gene the model currently has selected.
+  const markCurrentSelection = () => {
+    markSelected((model.get("selected_gene") || "").toString());
+  };
+
   const columnClass = (col) => {
     if (col === "Gene") {
       return "ct-col-gene";
@@ -113,11 +118,9 @@ function render({ model, el }) {
   };
 
   initializeTable();
-  markSelected((model.get("selected_gene") || "").toString());
+  markCurrentSelection();
   // Also follow programmatic changes (e.g. restoring a saved session).
-  model.on("change:selected_gene", () => {
-    markSelected((model.get("selected_gene") || "").toString());
-  });
+  model.on("change:selected_gene", markCurrentSelection);
 
   let previousLength = 0;
 
