@@ -94,6 +94,48 @@ def _wire_empty_states(selections_predicates: VBox, empty_genes: ipyw.HTML) -> N
     sync()
 
 
+# ── Workspace columns ───────────────────────────────────────────────────────
+# Two columns (plot | sidebar) by default; the details column (extra views,
+# gene description, pathway table) is added only while it has something to show.
+_COLUMNS_TWO = "minmax(0, 2fr) minmax(280px, 1fr)"
+_COLUMNS_THREE = "minmax(0, 1.6fr) minmax(260px, 1fr) minmax(280px, 1fr)"
+
+
+def _wire_details_visibility(
+    workspace: GridBox, details: VBox, watched: List[ipyw.Widget]
+) -> None:
+    """Show the details column only while one of ``watched`` is visible.
+
+    The result and multi-view handlers already toggle ``layout.display`` on
+    these containers (and ``_results`` sometimes replaces their ``Layout``
+    object), so this listens for those changes instead of touching every
+    handler.
+    """
+
+    def sync(*_args) -> None:
+        has_content = any(w.layout.display != "none" for w in watched)
+        details.layout.display = "flex" if has_content else "none"
+        workspace.layout.grid_template_columns = (
+            _COLUMNS_THREE if has_content else _COLUMNS_TWO
+        )
+
+    def rebind(change) -> None:
+        old, new = change["old"], change["new"]
+        if old is not None:
+            try:
+                old.unobserve(sync, names=["display"])
+            except ValueError:
+                pass
+        if new is not None:
+            new.observe(sync, names=["display"])
+        sync()
+
+    for w in watched:
+        w.layout.observe(sync, names=["display"])
+        w.observe(rebind, names=["layout"])
+    sync()
+
+
 def _theme_css() -> str:
     """Return the scSketch theme stylesheet ('' if the file is missing)."""
     try:
@@ -492,13 +534,16 @@ def build_controls(
     workspace = GridBox(
         [plot_wrapper, sidebar, details],
         layout=Layout(
-            grid_template_columns="minmax(0, 1.6fr) minmax(260px, 1fr) minmax(280px, 1fr)",
+            grid_template_columns=_COLUMNS_THREE,
             width="100%",
             min_width="0px",
             align_items="stretch",
         ),
     )
     workspace.add_class("sc-workspace")
+    _wire_details_visibility(
+        workspace, details, [multi_view_container, pathway_table_container]
+    )
 
     # The full pathway diagram keeps the width available below the workspace.
     reactome_diagram_container.add_class("sc-dock")

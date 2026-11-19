@@ -161,7 +161,10 @@ class ScSketch:
         self.reactome_species = reactome_species
         self.extra_views: dict[str, Scatter] = dict(extra_views or {})
         self._multi_view_syncing = False
-        self._extra_view_size = max(240, min(int(height), 420))
+        # Extra views fill the details column: full width ("auto") and roughly the
+        # main plot's height (the column is as tall as the main plot panel; the
+        # chip above and toolbar below the view take the few pixels of slack).
+        self._extra_view_size = max(240, int(height) - 8)
         self._gene_display_names = self._build_gene_display_names(adata)
 
         # -- Build DataFrame ------------------------------------------------
@@ -694,7 +697,7 @@ class ScSketch:
     def _configure_extra_views(self) -> None:
         for label, view in self.extra_views.items():
             try:
-                view.width(self._extra_view_size)
+                view.width("auto")
                 view.height(self._extra_view_size)
             except Exception:
                 self.logger.exception("Failed to size extra view %r", label)

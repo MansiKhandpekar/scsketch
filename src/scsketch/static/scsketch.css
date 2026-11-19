@@ -353,11 +353,15 @@
   line-height: 20px;
   text-align: center;
 }
-/* Open the lasso-type / brush-size popups above the toolbar, not over it. */
+/* Open the lasso-type / brush-size popups above the toolbar and centred on
+   their button, exactly like the PCA toolbar's. jupyter-scatter places these
+   top-layer dialogs with inline top/left (left = button left + 36px), and the
+   32px button's centre is 16px in, so shift by -50% of the pop-up plus
+   (16 - 36) = -20px, and up by the pop-up's own height plus a 10px gap. */
 .sc-plot dialog.jupyter-scatter-choice-dialog,
 .sc-plot dialog.jupyter-scatter-slider-dialog {
-  /* these are top-layer dialogs placed with inline top/left, so nudge upward */
-  margin-top: -56px !important;
+  margin: 0 !important;
+  transform: translate(calc(-50% - 20px), calc(-100% - 10px));
 }
 .sc-plot .jupyter-scatter-divider {
   width: 1px !important;
@@ -367,19 +371,24 @@
   border: 0 !important;
 }
 
-/* Extra-view (e.g. PCA) toolbar: same floating pill as the main plot's,
-   in light colours to suit the white details column. Buttons are a little
-   smaller and the pill wraps so it fits the narrower column. */
+/* Extra-view (e.g. PCA) toolbar: same pill look as the main plot's, in light
+   colours, pinned to the bottom of the column (aligned with the main plot's
+   toolbar) and below the plot so it never covers the axes. Buttons are a little
+   smaller and the pill wraps so it fits the column. */
 .sc-details .widget-hbox:has(> .widget-vbox > div > .jupyter-scatter-button) {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  position: static;
 }
 .sc-details .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) {
+  /* Pinned to the bottom of the details column, 24px up, like the main
+     plot's toolbar, so the two toolbars line up across the row. */
   position: absolute;
   left: 50%;
-  /* Sit above the x-axis (about 40px of ticks and labels) instead of over it. */
-  bottom: 52px;
+  bottom: 24px;
   transform: translateX(-50%);
   z-index: 5;
+  margin: 0;
   flex-direction: row !important;
   flex-wrap: wrap;
   justify-content: center;
@@ -512,7 +521,10 @@
 /* Compute button — matches the "Compute Directional Search" design.
    Disabled = muted grey (as in the design); enabled = dark, high contrast. */
 .sc-root .sc-compute button.jupyter-scatter-button {
-  height: 48px;
+  height: 40px;
+  min-height: 0;
+  flex: none;
+  align-self: stretch;
   width: 100%;
   margin: 0;
   border: 0;
@@ -523,6 +535,10 @@
   background: var(--sc-text);
   color: #ffffff;
 }
+/* Keep the Compute DE block compact: no stretching, small gap above the button. */
+.sc-root .sc-compute .widget-vbox { gap: 8px; }
+.sc-root .sc-compute .widget-vbox > .widget-button,
+.sc-root .sc-compute .widget-vbox > .jupyter-scatter-button { flex: none; height: auto; }
 .sc-root .sc-compute button.jupyter-scatter-button:disabled {
   background: var(--sc-surface-disabled);
   color: var(--sc-text-muted);
@@ -534,6 +550,7 @@
 /* Upper-right gene details. Let the UMAP set the row height, then scroll
    long gene descriptions/pathway lists inside their existing container. */
 .sc-details {
+  position: relative;
   contain: size;
   background: var(--sc-surface);
   border-left: 1px solid var(--sc-border);
@@ -608,17 +625,8 @@
    cursor by .sc-root's position on the page. */
 .sc-root .sc-session-name input { min-width: 0; width: 100%; }
 /* medium (<= 1000px) and narrow (<= 760px) */
-.sc-root:is([data-sc-width="medium"], [data-sc-width="narrow"]) .sc-workspace {
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px) !important;
-}
-.sc-root:is([data-sc-width="medium"], [data-sc-width="narrow"]) .sc-details {
-  grid-column: 1 / -1;
-  contain: none;
-  height: auto !important;
-  max-height: 640px;
-  border-left: 0;
-  border-top: 1px solid var(--sc-border);
-}
+/* The details column stays beside the plot at medium widths (it is only shown
+   while it has content), so there is no medium-width override for the grid. */
 .sc-root:is([data-sc-width="medium"], [data-sc-width="narrow"]) .sc-topbar {
   height: auto; min-height: 60px; flex-wrap: wrap;
   padding: 12px 16px; gap: 12px; overflow: visible;

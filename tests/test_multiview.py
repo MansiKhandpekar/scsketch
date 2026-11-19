@@ -70,8 +70,8 @@ def test_extra_views_enable_multi_view_panel_and_share_color_map():
     assert sketch._ctrl.multi_view_toggle.value is True
     assert sketch._ctrl.multi_view_container.layout.display == "flex"
     assert sketch._ctrl.pathway_table_container.layout.display == "none"
-    assert pca.width() == 420
-    assert pca.height() == 420
+    assert pca.width() == "auto"
+    assert pca.height() == sketch._extra_view_size
     assert pca._color_map_order == list(sketch.categorical_color_maps["cluster"])
 
 
