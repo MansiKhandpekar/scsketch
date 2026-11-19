@@ -381,6 +381,7 @@ def build_controls(
         layout=Layout(display="none", width="100%", min_width="0px"),
     )
     gene_expression_caption.add_class("sc-caption")
+
     # ── Session import/export controls ───────────────────────────────────────
     session_filename = Text(
         value="scsketch-session.scsketch.json",
