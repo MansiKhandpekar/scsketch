@@ -8,6 +8,7 @@ from .gene_violin_plot import GeneViolinPlot
 from .interactive_svg import InteractiveSVG
 from .label import Label
 from .pathway_table import PathwayTable
+from .width_watcher import WidthWatcher
 
 __all__ = [
     "CorrelationTable",
@@ -18,4 +19,5 @@ __all__ = [
     "InteractiveSVG",
     "Label",
     "PathwayTable",
+    "WidthWatcher",
 ]

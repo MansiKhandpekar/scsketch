@@ -332,14 +332,26 @@
   background: rgba(255, 255, 255, 0.14);
   color: #ffffff;
 }
+/* Centre every icon (SVG or font glyph) in its button: flex-centre the
+   button and strip the margins/padding that ipywidgets adds next to icons. */
+.sc-plot .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) button {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1;
+}
 .sc-plot .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) button svg,
 .sc-plot .widget-hbox > .widget-vbox:has(> div > .jupyter-scatter-button) button i {
   display: block;
+  flex: none;
   width: 20px !important;
   height: 20px !important;
-  margin: 0 auto;
+  margin: 0 !important;
+  padding: 0 !important;
   font-size: 16px;
   line-height: 20px;
+  text-align: center;
 }
 /* Open the lasso-type / brush-size popups above the toolbar, not over it. */
 .sc-plot dialog.jupyter-scatter-choice-dialog,
@@ -587,37 +599,40 @@
   background: var(--sc-dark-control);
 }
 
-/* Notebook output widths vary independently of the browser window. */
-.sc-root { container-type: inline-size; }
+/* Responsive breakpoints follow the notebook OUTPUT width, not the window.
+   widgets/width_watcher.js sets data-sc-width="wide|medium|narrow" on .sc-root.
+   Do not use @container queries here: container-type applies layout
+   containment, which makes .sc-root the containing block for position:fixed
+   descendants. jupyter-scatter draws its lasso/brush pointer as a fixed
+   element placed at clientX/clientY, so it would end up offset from the real
+   cursor by .sc-root's position on the page. */
 .sc-root .sc-session-name input { min-width: 0; width: 100%; }
-@container (max-width: 1000px) {
-  .sc-root .sc-workspace {
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px) !important;
-  }
-  .sc-root .sc-details {
-    grid-column: 1 / -1;
-    contain: none;
-    height: auto !important;
-    max-height: 640px;
-    border-left: 0;
-    border-top: 1px solid var(--sc-border);
-  }
-  .sc-root .sc-topbar {
-    height: auto; min-height: 60px; flex-wrap: wrap;
-    padding: 12px 16px; gap: 12px; overflow: visible;
-  }
-  .sc-root .sc-session {
-    order: 2; flex: 1 0 100%; padding-left: 0; border-left: 0;
-    flex-wrap: wrap; overflow: visible;
-  }
-  .sc-root .sc-session-name { min-width: 120px; }
-  .sc-root .sc-history { margin-left: auto; }
+/* medium (<= 1000px) and narrow (<= 760px) */
+.sc-root:is([data-sc-width="medium"], [data-sc-width="narrow"]) .sc-workspace {
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px) !important;
 }
-@container (max-width: 760px) {
-  .sc-root .sc-workspace { grid-template-columns: minmax(0, 1fr) !important; }
-  .sc-root .sc-sidebar { height: auto !important; min-height: 360px; }
-  .sc-root .sc-sidebar-genes { flex: 1 1 auto !important; }
+.sc-root:is([data-sc-width="medium"], [data-sc-width="narrow"]) .sc-details {
+  grid-column: 1 / -1;
+  contain: none;
+  height: auto !important;
+  max-height: 640px;
+  border-left: 0;
+  border-top: 1px solid var(--sc-border);
 }
+.sc-root:is([data-sc-width="medium"], [data-sc-width="narrow"]) .sc-topbar {
+  height: auto; min-height: 60px; flex-wrap: wrap;
+  padding: 12px 16px; gap: 12px; overflow: visible;
+}
+.sc-root:is([data-sc-width="medium"], [data-sc-width="narrow"]) .sc-session {
+  order: 2; flex: 1 0 100%; padding-left: 0; border-left: 0;
+  flex-wrap: wrap; overflow: visible;
+}
+.sc-root:is([data-sc-width="medium"], [data-sc-width="narrow"]) .sc-session-name { min-width: 120px; }
+.sc-root:is([data-sc-width="medium"], [data-sc-width="narrow"]) .sc-history { margin-left: auto; }
+/* narrow only */
+.sc-root[data-sc-width="narrow"] .sc-workspace { grid-template-columns: minmax(0, 1fr) !important; }
+.sc-root[data-sc-width="narrow"] .sc-sidebar { height: auto !important; min-height: 360px; }
+.sc-root[data-sc-width="narrow"] .sc-sidebar-genes { flex: 1 1 auto !important; }
 
 /* Align notebook Text/Label widgets with the adjacent native scatter buttons.
    Their default 2px margins otherwise overlap the next grid column. */

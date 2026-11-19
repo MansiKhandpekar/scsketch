@@ -32,6 +32,8 @@ from jscatter.widgets import Button
 
 from jscatter import Scatter
 
+from .widgets.width_watcher import WidthWatcher
+
 # ── Progress spinner HTML (shared) ──────────────────────────────────────────
 
 PROGRESS_SPINNER_HTML = (
@@ -502,8 +504,9 @@ def build_controls(
     reactome_diagram_container.add_class("sc-dock")
 
     # ── Top-level layout ─────────────────────────────────────────────────────
+    # Invisible: keeps `data-sc-width` on .sc-root in sync with the output width.
     ui = VBox(
-        [top_bar, workspace, reactome_diagram_container],
+        [top_bar, workspace, reactome_diagram_container, WidthWatcher()],
         layout=Layout(width="100%", min_width="0px"),
     )
     ui.add_class("sc-root")
